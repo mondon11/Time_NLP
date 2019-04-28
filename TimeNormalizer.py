@@ -16,7 +16,7 @@ from TimeUnit import TimeUnit
 
 # 时间表达式识别的主要工作类
 class TimeNormalizer:
-    def __init__(self, isPreferFuture=True):
+    def __init__(self, isPreferFuture=False):
         self.isPreferFuture = isPreferFuture
         self.pattern, self.holi_solar, self.holi_lunar = self.init()
 
@@ -80,6 +80,16 @@ class TimeNormalizer:
         :param timeBase: 基准时间点
         :param target: 待分析字符串
         :return: 时间单元数组
+
+        eg.“去年12月31日”
+        :return
+        dict:{
+            "error":"",
+            "timestamp":"2018-12-31 00:00:00",
+            "timespan":["2018-12-31 00:00:00", "2019-01-01 00:00:00"],
+            "timedelta":""
+        }
+
         """
         self.isTimeSpan = False
         self.invalidSpan = False
@@ -90,7 +100,12 @@ class TimeNormalizer:
         self.oldTimeBase = self.timeBase
         self.__preHandling()
         self.timeToken = self.__timeEx()
-        dic = {}
+        dic = {
+            "error":"",
+            "timestamp":"",
+            "timespan":[],
+            "timedelta":""
+        }
         res = self.timeToken
 
         if self.isTimeSpan:
@@ -98,7 +113,7 @@ class TimeNormalizer:
                 dic['error'] = 'no time pattern could be extracted.'
             else:
                 result = {}
-                dic['type'] = 'timedelta'
+                #dic['type'] = 'timedelta'
                 dic['timedelta'] = self.timeSpan
                 # print(dic['timedelta'])
                 index = dic['timedelta'].find('days')
@@ -118,11 +133,32 @@ class TimeNormalizer:
             if len(res) == 0:
                 dic['error'] = 'no time pattern could be extracted.'
             elif len(res) == 1:
-                dic['type'] = 'timestamp'
+                #dic['type'] = 'timestamp'
                 dic['timestamp'] = res[0].time.format("YYYY-MM-DD HH:mm:ss")
+                # 查流水改造
+                l = res[0].tp.tunit
+                # eg. "今年"=> {"timespan": ["2019-01-01 00:00:00", "2020-01-01 00:00:00"]}
+                if l[1] == -1:
+                    timestamp1 = res[0].time.format("YYYY-MM-DD HH:mm:ss")
+                    timestamp2 = res[0].time.shift(years=1).format("YYYY-MM-DD HH:mm:ss")
+                    dic['timespan'] = [timestamp1,timestamp2]
+                # eg. "去年12"=> {"timespan": ["2018-12-01 00:00:00", "2019-01-01 00:00:00"]}
+                elif l[2] == -1:
+                    timestamp1 = res[0].time.format("YYYY-MM-DD HH:mm:ss")
+                    timestamp2 = res[0].time.shift(months=1).format("YYYY-MM-DD HH:mm:ss")
+                    dic['timespan'] = [timestamp1, timestamp2]
+                # eg. "去年12月31日"=> {"timespan": ["2018-12-31 00:00:00", "2019-01-01 00:00:00"]}
+                elif l[3] == -1:
+                    timestamp1 = res[0].time.format("YYYY-MM-DD HH:mm:ss")
+                    timestamp2 = res[0].time.shift(days=1).format("YYYY-MM-DD HH:mm:ss")
+                    dic['timespan'] = [timestamp1, timestamp2]
+                else:
+                    dic['timespan'] = []
+
             else:
-                dic['type'] = 'timespan'
+                #dic['type'] = 'timespan'
                 dic['timespan'] = [res[0].time.format("YYYY-MM-DD HH:mm:ss"), res[1].time.format("YYYY-MM-DD HH:mm:ss")]
+
         return json.dumps(dic)
 
     def __preHandling(self):
