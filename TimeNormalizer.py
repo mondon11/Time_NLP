@@ -149,6 +149,7 @@ class TimeNormalizer:
                     dic['timespan'] = [timestamp1, timestamp2]
                 # eg. "去年12月31日"=> {"timespan": ["2018-12-31 00:00:00", "2019-01-01 00:00:00"]}
                 elif l[3] == -1:
+                    '''
                     rule = u"周[一二三四五六七日1234567]+"
                     pattern = re.compile(rule)
                     match1 = pattern.search(self.target)
@@ -165,6 +166,27 @@ class TimeNormalizer:
                         timestamp1 = res[0].time.format("YYYY-MM-DD HH:mm:ss")
                         timestamp2 = res[0].time.shift(days=1).format("YYYY-MM-DD HH:mm:ss")
                         dic['timespan'] = [timestamp1, timestamp2]
+                    '''
+                    week = 0
+                    rule = u"(?<=((周|星期|礼拜)))[1-7]?"
+                    pattern = re.compile(rule)
+                    match = pattern.search(self.target)
+                    if match is not None:
+                        try:
+                            week = int(match.group())
+                        except:
+                            week = -1
+
+                    if week == -1:
+                        timestamp1 = res[0].time.format("YYYY-MM-DD HH:mm:ss")
+                        timestamp2 = res[0].time.shift(weeks=1).format("YYYY-MM-DD HH:mm:ss")
+                        dic['timespan'] = [timestamp1, timestamp2]
+                    else:
+                        timestamp1 = res[0].time.format("YYYY-MM-DD HH:mm:ss")
+                        timestamp2 = res[0].time.shift(days=1).format("YYYY-MM-DD HH:mm:ss")
+                        dic['timespan'] = [timestamp1, timestamp2]
+
+
                 else:
                     dic['timespan'] = []
 

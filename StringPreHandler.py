@@ -76,12 +76,12 @@ class StringPreHandler:
         for m in match:
             target = pattern.sub(str(cls.wordToNumber(m.group())), target, 1)
 
-        pattern = re.compile(u"(?<=(周|星期))[末天日]")
+        pattern = re.compile(u"(?<=(周|星期|礼拜))[末天日]")
         match = pattern.finditer(target)
         for m in match:
             target = pattern.sub(str(cls.wordToNumber(m.group())), target, 1)
 
-        pattern = re.compile(u"(?<!(周|星期))0?[0-9]?十[0-9]?")
+        pattern = re.compile(u"(?<!(周|星期|礼拜))0?[0-9]?十[0-9]?")
         match = pattern.finditer(target)
         for m in match:
             group = m.group()
